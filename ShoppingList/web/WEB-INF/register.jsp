@@ -19,6 +19,6 @@
             <br>
             <input type="submit" value="Register Name">
         </form>
-            <h2>${message}</h2>
+        <h2>${message}</h2>
     </body>
 </html>

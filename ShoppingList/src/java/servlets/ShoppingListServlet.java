@@ -11,6 +11,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import models.ShopList;
+import services.ShopListService;
 
 /**
  *
@@ -19,20 +21,30 @@ import javax.servlet.http.HttpSession;
 public class ShoppingListServlet extends HttpServlet {
 
     private final int PAGE_SIZE = 10;
-    
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         HttpSession session = req.getSession();
         String[] loginInfo = req.getParameterValues("loginInfo[]");
         boolean validated = false;
-        String username = loginInfo[0];
-        req.setAttribute("username", username);
+
         String myAction = req.getParameter("action");
+
         
+        ShopListService shopListService = new ShopListService();
+        ShopList myShoppingList;
         
+        if (session.getAttribute("myShoppingList") == null) {
+            myShoppingList = shopListService.getShoppingList();
+        } else {
+            myShoppingList = (ShopList) session.getAttribute("myShoppingList");
+        }
+     
         if (myAction != null) {
             switch (myAction) {
                 case "register":
+                    String username = loginInfo[0];
+                    req.setAttribute("username", username);
                     if (username != null && !username.isEmpty()) {
                         session.setAttribute("s_username", username);
                         getServletContext().getRequestDispatcher("/WEB-INF/shoppingList.jsp").forward(req,resp);
@@ -40,10 +52,19 @@ public class ShoppingListServlet extends HttpServlet {
                         getServletContext().getRequestDispatcher("/WEB-INF/register.jsp").forward(req,resp);
                     } 
                     break;
-                case "add": break;
-                case "delete": break;
+                case "add":
+                    String itemToAdd = req.getParameter("itemToAdd");
+                    myShoppingList.addItem(itemToAdd);
+                    break;
+                case "delete":
+                    myShoppingList.deleteItem(req.getParameter("item"));
+                    break;
             }
         }
+
+        session.setAttribute("myShoppingList", myShoppingList);
+        req.setAttribute("myShoppingList", myShoppingList.getShoppingListArray());
+        getServletContext().getRequestDispatcher("/WEB-INF/shoppingList.jsp").forward(req,resp);
         
        
     }
@@ -53,6 +74,16 @@ public class ShoppingListServlet extends HttpServlet {
         HttpSession session = req.getSession();
         String myAction = req.getParameter("action");
         String username = (String)session.getAttribute("s_username");
+        
+        
+        ShopListService shopListService = new ShopListService();
+        ShopList myShoppingList;
+        if (session.getAttribute("myShoppingList") == null) {
+            myShoppingList = shopListService.getShoppingList();
+        } else {
+            myShoppingList = (ShopList) session.getAttribute("myShoppingList");
+        }
+        req.setAttribute("myShoppingList", myShoppingList.getShoppingListArray());
         
         if ((myAction != null) && (myAction.equals("logout"))) {
             session.invalidate();
